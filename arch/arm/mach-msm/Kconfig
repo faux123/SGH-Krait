@@ -733,6 +733,13 @@ config MACH_M2_ATT
         help
           Support for the Samsung M2 AT&T device.
 
+config MACH_M2_TMO
+        depends on ARCH_MSM8960
+        default n
+        bool "MSM8960 Samsung M2_TMO"
+        help
+          Support for the Samsung M2 TMO device.
+
 config MACH_M2_SKT
         depends on ARCH_MSM8960
         default n

@@ -2003,7 +2003,7 @@ static struct cm36651_platform_data cm36651_pdata = {
 	.cm36651_led_on = cm36651_led_onoff,
 	.cm36651_power_on = cm36651_power_on,
 	.irq = PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_RGB_INT),
-	.threshold = 15,
+	.threshold = 13,
 };
 #endif
 static struct i2c_board_info opt_i2c_borad_info[] = {
