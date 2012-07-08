@@ -451,7 +451,7 @@ static void ehci_shutdown(struct usb_hcd *hcd)
 	spin_unlock_irq(&ehci->lock);
 }
 
-static void ehci_port_power (struct ehci_hcd *ehci, int is_on)
+static void __maybe_unused ehci_port_power (struct ehci_hcd *ehci, int is_on)
 {
 	unsigned port;
 
@@ -527,8 +527,21 @@ static void ehci_stop (struct usb_hcd *hcd)
 
 	/* root hub is shut down separately (first, when possible) */
 	spin_lock_irq (&ehci->lock);
-	if (ehci->async)
+	if (ehci->async) {
+		/*
+		 * TODO: Observed that ehci->async next ptr is not
+		 * NULL sometimes which leads to crash in mem_cleanup.
+		 * Root cause is not yet known why this messup is
+		 * happenning.
+		 * The follwing workaround fixes the crash caused
+		 * by this temporarily.
+		 * check if async next ptr is not NULL and unlink
+		 * explictly.
+		 */
+		if (ehci->async->qh_next.ptr != NULL)
+			start_unlink_async(ehci, ehci->async->qh_next.qh);
 		ehci_work (ehci);
+	}
 	spin_unlock_irq (&ehci->lock);
 	ehci_mem_cleanup (ehci);
 
@@ -667,7 +680,7 @@ static int ehci_init(struct usb_hcd *hcd)
 }
 
 /* start HC running; it's halted, ehci_init() has been run (once) */
-static int ehci_run (struct usb_hcd *hcd)
+static int __maybe_unused ehci_run (struct usb_hcd *hcd)
 {
 	struct ehci_hcd		*ehci = hcd_to_ehci (hcd);
 	int			retval;
@@ -1115,7 +1128,7 @@ done:
 	spin_unlock_irqrestore (&ehci->lock, flags);
 }
 
-static void
+static void __maybe_unused
 ehci_endpoint_reset(struct usb_hcd *hcd, struct usb_host_endpoint *ep)
 {
 	struct ehci_hcd		*ehci = hcd_to_ehci(hcd);
@@ -1252,6 +1265,11 @@ MODULE_LICENSE ("GPL");
 #ifdef CONFIG_PLAT_SPEAR
 #include "ehci-spear.c"
 #define PLATFORM_DRIVER		spear_ehci_hcd_driver
+#endif
+
+#ifdef CONFIG_USB_EHCI_MSM_72K
+#include "ehci-msm72k.c"
+#define PLATFORM_DRIVER		ehci_msm_driver
 #endif
 
 #ifdef CONFIG_USB_EHCI_MSM

@@ -247,12 +247,11 @@ struct cfg80211_event {
 			u16 status;
 		} cr;
 		struct {
-			struct ieee80211_channel *channel;
-			u8 bssid[ETH_ALEN];
 			const u8 *req_ie;
 			const u8 *resp_ie;
 			size_t req_ie_len;
 			size_t resp_ie_len;
+			struct cfg80211_bss *bss;
 		} rm;
 		struct {
 			const u8 *ie;
@@ -396,8 +395,7 @@ int cfg80211_disconnect(struct cfg80211_registered_device *rdev,
 			struct net_device *dev, u16 reason,
 			bool wextev);
 void __cfg80211_roamed(struct wireless_dev *wdev,
-		       struct ieee80211_channel *channel,
-		       const u8 *bssid,
+		       struct cfg80211_bss *bss,
 		       const u8 *req_ie, size_t req_ie_len,
 		       const u8 *resp_ie, size_t resp_ie_len);
 int cfg80211_mgd_wext_connect(struct cfg80211_registered_device *rdev,
@@ -408,6 +406,7 @@ void cfg80211_sme_failed_assoc(struct wireless_dev *wdev);
 bool cfg80211_sme_failed_reassoc(struct wireless_dev *wdev);
 
 /* internal helpers */
+bool cfg80211_supported_cipher_suite(struct wiphy *wiphy, u32 cipher);
 int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
 				   struct key_params *params, int key_idx,
 				   bool pairwise, const u8 *mac_addr);
