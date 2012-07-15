@@ -2326,6 +2326,12 @@ config MSM_DCVS_FOR_MSM8260A
 	help
 	  To divide the dcvs for MSM8260A Model.
 
+config CPU_OVERCLOCK
+	bool "Enable CPU Overclocking option"
+	default n
+	help
+	  Krait overclocking up to 1.84 GHz
+
 config SEC_PERIPHERAL_SECURE_CHK
 	bool "PERIPHERAL SECURE check"
 	help
