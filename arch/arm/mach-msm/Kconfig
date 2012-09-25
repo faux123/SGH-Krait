@@ -32,8 +32,6 @@ config ARCH_MSM7X27
 	select REGULATOR
 	select MULTI_IRQ_HANDLER
 	select MSM_PROC_COMM_REGULATOR
-	select CLEANCACHE
-	select QCACHE
 	select MSM_PM2 if PM
 
 config ARCH_MSM7X30
@@ -162,8 +160,6 @@ config ARCH_MSM8960
 	select ARCH_MEMORY_PROBE if ENABLE_DMM
 	select ARCH_MEMORY_REMOVE if ENABLE_DMM
 	select FIX_MOVABLE_ZONE if ENABLE_DMM
-	select CLEANCACHE
-	select QCACHE
 	select MSM_MULTIMEDIA_USE_ION
 	select MULTI_IRQ_HANDLER
 	select MSM_PM8X60 if PM
@@ -2051,11 +2047,6 @@ config CLOCK_MAP
 	  A bitmap is maintained in non-cached memory and each registered
 	  clock gets a unique id. If the bitmap has that bit set the clock
 	  is enabled, otherwise the clock is disabled.
-
-config MSM_SLEEP_STATS
-	bool "Enable exporting of MSM sleep stats to userspace"
-	depends on CPU_IDLE
-	default n
 
 config MSM_SLEEP_STATS_DEVICE
 	bool "Enable exporting of MSM sleep device stats to userspace"
