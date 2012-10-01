@@ -1,5 +1,5 @@
 config MPU_SENSORS_TIMERIRQ_411
-	tristate "MPU Timer IRQ"
+	tristate "MPU Timer IRQ 411"
 	help
 	  If you say yes here you get access to the timerirq device handle which
 	  can be used to select on.  This can be used instead of IRQ's, sleeping,
@@ -7,7 +7,7 @@ config MPU_SENSORS_TIMERIRQ_411
 	  information as reading from the MPU and slave IRQ's.
 
 menuconfig: INV_SENSORS_411
-	tristate "Motion Processing Unit"
+	tristate "Motion Processing Unit 411"
 	depends on I2C
 	default y
 
@@ -19,7 +19,7 @@ choice
 	default MPU_SENSORS_MPU3050_411
 
 config MPU_SENSORS_MPU3050_411
-	bool "MPU3050"
+	bool "MPU3050 411"
 	depends on I2C
 	select MPU_SENSORS_MPU3050_GYRO
 	help
@@ -29,7 +29,7 @@ config MPU_SENSORS_MPU3050_411
 	  will be called mpu3050.
 
 config MPU_SENSORS_MPU6050A2_411
-	bool "MPU6050A2"
+	bool "MPU6050A2 411"
 	depends on I2C
 	select MPU_SENSORS_MPU6050_GYRO
 	help
@@ -39,7 +39,7 @@ config MPU_SENSORS_MPU6050A2_411
 	  will be called mpu6050a2.
 
 config MPU_SENSORS_MPU6050B1_411
-	bool "MPU6050B1"
+	bool "MPU6050B1 411"
 	select MPU_SENSORS_MPU6050_GYRO
 	depends on I2C
 	help
