@@ -2345,6 +2345,12 @@ config CPU_ULTIMATE
 	help
 	  Krait overclocking up to 1.84 GHz
 
+config ENABLE_MIN_KRAIT_VOLTAGE
+	bool "Enable min CPU Voltage"
+	default n
+	help
+	  Krait min Votlage bug
+
 config CPU_VOLTAGE_TABLE
 	bool "Enable CPU Voltage Table via sysfs for adjustements"
 	default n
