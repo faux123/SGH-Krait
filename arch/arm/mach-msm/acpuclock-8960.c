@@ -1720,6 +1720,7 @@ static struct notifier_block __cpuinitdata acpuclock_cpu_notifier = {
 	.notifier_call = acpuclock_cpu_callback,
 };
 
+#ifdef CONFIG_ENABLE_MIN_KRAIT_VOLTAGE
 static const int krait_needs_vmin(void)
 {
 	switch (read_cpuid_id()) {
@@ -1738,6 +1739,7 @@ static void kraitv2_apply_vmin(struct acpu_level *tbl)
 		if (tbl->vdd_core < 1150000)
 			tbl->vdd_core = 1150000;
 }
+#endif
 
 #ifdef CONFIG_SEC_L1_DCACHE_PANIC_CHK
 uint32_t global_sec_pvs_value;
@@ -1872,8 +1874,10 @@ static struct acpu_level * __init select_freq_plan(void)
 	} else {
 		BUG();
 	}
+#ifdef CONFIG_ENABLE_MIN_KRAIT_VOLTAGE
 	if (krait_needs_vmin())
 		kraitv2_apply_vmin(acpu_freq_tbl);
+#endif
 
 	/* Find the max supported scaling frequency. */
 	for (l = acpu_freq_tbl; l->speed.khz != 0; l++)
