@@ -1907,7 +1907,7 @@ static unsigned int app_max_freq_limit = MAX_FREQ_LIMIT;
 static unsigned int user_min_freq_limit = MIN_FREQ_LIMIT;
 static unsigned int user_max_freq_limit = MAX_FREQ_LIMIT;
 
-static int cpufreq_set_limits_off
+int cpufreq_set_limits_off
 	(int cpu, unsigned int min, unsigned int max)
 {
 	int ret = -ENODEV;
@@ -1934,7 +1934,7 @@ out_unlock:
 	return ret;
 }
 
-static int cpufreq_set_limits(int cpu, unsigned int min, unsigned int max)
+int cpufreq_set_limits(int cpu, unsigned int min, unsigned int max)
 {
 	struct cpufreq_policy *policy = NULL;
 	struct cpufreq_policy new_policy;
@@ -2289,7 +2289,6 @@ err_null_driver:
 	return ret;
 }
 EXPORT_SYMBOL_GPL(cpufreq_register_driver);
-
 
 /**
  * cpufreq_unregister_driver - unregister the current CPUFreq driver
