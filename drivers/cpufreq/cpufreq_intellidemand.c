@@ -55,7 +55,7 @@
 #define DBS_INPUT_EVENT_MIN_FREQ		(810000)
 #define DBS_TWO_PHASE_FREQ			(1134000)
 
-u64 freq_boosted_time;
+static u64 freq_boosted_time;
 
 /*
  * The polling frequency of this governor depends on the capability of
@@ -83,9 +83,9 @@ static unsigned long stored_sampling_rate;
 
 /* have the timer rate booted for this much time 2.5s*/
 #define TIMER_RATE_BOOST_TIME 2500000
-int sampling_rate_boosted;
-u64 sampling_rate_boosted_time;
-unsigned int current_sampling_rate;
+static int sampling_rate_boosted;
+static u64 sampling_rate_boosted_time;
+static unsigned int current_sampling_rate;
 
 static void do_dbs_timer(struct work_struct *work);
 static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
