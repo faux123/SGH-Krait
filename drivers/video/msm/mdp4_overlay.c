@@ -1686,8 +1686,8 @@ void mdp4_mixer_stage_commit(int mixer)
 		pipe = ctrl->stage[mixer][i];
 		if (pipe == NULL)
 			continue;
-		pr_debug("%s: mixer=%d ndx=%d stage=%d\n", __func__,
-					mixer, pipe->pipe_ndx, i);
+		//pr_debug("%s: mixer=%d ndx=%d stage=%d\n", __func__,
+		//			mixer, pipe->pipe_ndx, i);
 		stage = pipe->mixer_stage;
 		if (mixer >= MDP4_MIXER1)
 			stage += 8;
@@ -1739,8 +1739,8 @@ void mdp4_mixer_stage_commit(int mixer)
 				}
 			}
 		}
-		pr_err("%s: mixer=%d data=%x flush=%x pid=%d\n", __func__,
-				mixer, data, ctrl->flush[mixer], current->pid);
+		//pr_err("%s: mixer=%d data=%x flush=%x pid=%d\n", __func__,
+		//		mixer, data, ctrl->flush[mixer], current->pid);
 	}
 
 	backup_mdp_no_video_on_primary_flag = mdp_no_video_on_primary_flag;
