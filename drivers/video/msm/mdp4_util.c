@@ -410,7 +410,7 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 
 #ifdef MDP_HANG_DEBUG
 		pr_info("-=-=-=-=-=-=-=-=-=- UNDER RUN -=-=-=\n");
-		mdp4_dump_regs();
+		//mdp4_dump_regs();
 #endif
 		/* When underun occurs mdp clear the histogram registers
 		that are set before in hw_init so restore them back so
