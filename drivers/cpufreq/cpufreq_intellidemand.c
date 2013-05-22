@@ -53,11 +53,15 @@
 #define DEF_SAMPLING_RATE			(50000)
 #define BOOSTED_SAMPLING_RATE			(20000)
 #define DBS_INPUT_EVENT_MIN_FREQ		(1026000)
-#define DBS_TWO_PHASE_FREQ			(1134000)
+#ifdef CONFIG_CPU_OVERCLOCK
+#define DBS_TWO_PHASE_FREQ			(1512000)
+#else
+#define DBS_TWO_PHASE_FREQ			(1350000)
+#endif
 #define DBS_SYNC_FREQ				(702000)
-#define DBS_OPTIMAL_FREQ			(1296000)
+#define DBS_OPTIMAL_FREQ			(1350000)
 
-u64 freq_boosted_time;
+static u64 freq_boosted_time;
 
 /*
  * The polling frequency of this governor depends on the capability of
@@ -85,8 +89,8 @@ static unsigned long stored_sampling_rate;
 
 /* have the timer rate booted for this much time 2.5s*/
 #define TIMER_RATE_BOOST_TIME 2500000
-int sampling_rate_boosted;
-u64 sampling_rate_boosted_time;
+static int sampling_rate_boosted;
+static u64 sampling_rate_boosted_time;
 unsigned int current_sampling_rate;
 
 static void do_dbs_timer(struct work_struct *work);
@@ -1214,6 +1218,8 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	}
 }
 
+bool id_gov_screen_state = true;
+
 #ifdef CONFIG_CPUFREQ_LIMIT_MAX_FREQ
 
 #define SAMPLE_DURATION_MSEC	(10*1000) // 10 secs >= 10000 msec
@@ -1228,7 +1234,6 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 #define NUM_INACTIVE_LOAD_ARRAY	(INACTIVE_DURATION_MSEC/SAMPLE_DURATION_MSEC)
 
 bool lmf_browsing_state = true;
-bool lmf_screen_state = true;
 
 static unsigned long lmf_active_max_limit = ACTIVE_MAX_FREQ;
 static unsigned long lmf_inactive_max_limit = INACTIVE_MAX_FREQ;
@@ -1330,7 +1335,9 @@ static unsigned int calculate_thread_stats (void)
 }
 
 static unsigned int persist_count = 0;
+#ifdef CONFIG_CPUFREQ_LIMIT_MAX_FREQ
 static unsigned int rq_persist_count = 0;
+#endif
 
 static void do_dbs_timer(struct work_struct *work)
 {
@@ -1346,7 +1353,7 @@ static void do_dbs_timer(struct work_struct *work)
 	//pr_info("run stats: %u\n", nr_run_stat);
 
 #if 1
-	if (cpu == BOOT_CPU && lmf_screen_state) {
+	if (cpu == BOOT_CPU && id_gov_screen_state) {
 		switch (nr_run_stat) {
 			case 1:
 				if (persist_count > 0)
@@ -1365,6 +1372,8 @@ static void do_dbs_timer(struct work_struct *work)
 				break;
 		}
 	}
+#endif
+#ifdef CONFIG_CPUFREQ_LIMIT_MAX_FREQ
 	if (num_online_cpus() == 2 && rq_info.rq_avg > 38)
 		rq_persist_count++;
 	else
@@ -1377,13 +1386,9 @@ static void do_dbs_timer(struct work_struct *work)
 	}
 	else
 		lmf_browsing_state = true;
-
-#endif
-
 	//pr_info("Run Queue Average: %u\n", rq_info.rq_avg);
 
-#ifdef CONFIG_CPUFREQ_LIMIT_MAX_FREQ
-	if (!lmf_browsing_state && lmf_screen_state)
+	if (!lmf_browsing_state && id_gov_screen_state)
 	{
 		if (cpu == BOOT_CPU)
 		{
@@ -1422,7 +1427,7 @@ static void do_dbs_timer(struct work_struct *work)
 			active_state = true;
 		}
 	}
-	else if (lmf_browsing_state && lmf_screen_state) // lmf_browsing_state -> TRUE
+	else if (lmf_browsing_state && id_gov_screen_state) // lmf_browsing_state -> TRUE
 	{
 		struct cpufreq_policy *policy;
 		unsigned long load_state_cpu = 0;
