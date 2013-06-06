@@ -387,3 +387,5 @@ obj-$(CONFIG_MSM_RTB) += msm_rtb.o
 obj-$(CONFIG_MSM_CACHE_ERP) += cache_erp.o
 obj-$(CONFIG_MSM_CACHE_DUMP) += msm_cache_dump.o
 obj-$(CONFIG_MFD_MAX77693)		+= sec-switch.o
+obj-$(CONFIG_MSM_CPUFREQ_LIMITER)	+= cpufreq_limit.o
+
