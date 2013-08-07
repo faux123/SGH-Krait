@@ -97,6 +97,8 @@ EXPORT_SYMBOL(system_serial_high);
 unsigned int elf_hwcap __read_mostly;
 EXPORT_SYMBOL(elf_hwcap);
 
+unsigned int boot_reason;
+EXPORT_SYMBOL(boot_reason);
 
 #ifdef MULTI_CPU
 struct processor processor __read_mostly;
@@ -130,7 +132,10 @@ static const char *cpu_name;
 static const char *machine_name;
 static char __initdata cmd_line[COMMAND_LINE_SIZE];
 struct machine_desc *machine_desc __initdata;
-
+#ifdef CONFIG_SEC_DEBUG_SUBSYS
+const char *unit_name;
+EXPORT_SYMBOL(unit_name);
+#endif
 static char default_command_line[COMMAND_LINE_SIZE] __initdata = CONFIG_CMDLINE;
 static union { char c[4]; unsigned long l; } endian_test __initdata = { { 'l', '?', '?', 'b' } };
 #define ENDIANNESS ((char)endian_test.l)
@@ -886,7 +891,9 @@ void __init setup_arch(char **cmdline_p)
 		mdesc = setup_machine_tags(machine_arch_type);
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
-
+#ifdef CONFIG_SEC_DEBUG_SUBSYS
+	unit_name = machine_name;
+#endif
 	if (mdesc->soft_reboot)
 		reboot_setup("s");
 
@@ -900,6 +907,9 @@ void __init setup_arch(char **cmdline_p)
 	*cmdline_p = cmd_line;
 
 	parse_early_param();
+
+	if (mdesc->init_very_early)
+		mdesc->init_very_early();
 
 	sanity_check_meminfo();
 	arm_memblock_init(&meminfo, mdesc);
@@ -979,6 +989,10 @@ static const char *hwcap_str[] = {
 	"neon",
 	"vfpv3",
 	"vfpv3d16",
+	"tls",
+	"vfpv4",
+	"idiva",
+	"idivt",
 	NULL
 };
 
