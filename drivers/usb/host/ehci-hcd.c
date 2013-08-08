@@ -1287,6 +1287,11 @@ MODULE_LICENSE ("GPL");
 #define PLATFORM_DRIVER		spear_ehci_hcd_driver
 #endif
 
+#ifdef CONFIG_USB_EHCI_MSM_72K
+#include "ehci-msm72k.c"
+#define PLATFORM_DRIVER		ehci_msm_driver
+#endif
+
 #ifdef CONFIG_USB_EHCI_MSM
 #include "ehci-msm.c"
 #define PLATFORM_DRIVER		ehci_msm_driver

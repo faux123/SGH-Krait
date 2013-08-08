@@ -125,6 +125,15 @@ config REGULATOR_MAX8998
 	  via I2C bus. The provided regulator is suitable for S3C6410
 	  and S5PC1XX chips to control VCC_CORE and VCC_USIM voltages.
 
+config REGULATOR_MAX77693
+	tristate "Maxim 777693 regulator"
+	depends on MFD_MAX77693
+	help
+	  This driver provides support for the voltage regulators of the
+	  MAX77693 PMIC
+	  The MAX77693 is a companion power management IC for the smart phones
+	  The Maxim Max 77693 handles PMIC, MUIC, and the flash LED control.
+
 config REGULATOR_TWL4030
 	bool "TI TWL4030/TWL5030/TWL6030/TPS659x0 PMIC"
 	depends on TWL4030_CORE
@@ -302,6 +311,47 @@ config REGULATOR_TPS65910
 	depends on MFD_TPS65910
 	help
 	  This driver supports TPS65910 voltage regulator chips.
+
+config REGULATOR_PMIC8058
+        tristate "PMIC8058 regulator driver"
+        depends on PMIC8058 && (ARCH_MSM8X60 || ARCH_FSM9XXX)
+        default y if PMIC8058 && (ARCH_MSM8X60 || ARCH_FSM9XXX)
+        help
+         Say Y here to support the voltage regulators on PMIC8058
+
+config REGULATOR_PMIC8901
+        tristate "PMIC8901 regulator driver"
+        depends on PMIC8901 && ARCH_MSM8X60
+        default y if PMIC8901 && ARCH_MSM8X60
+        help
+         Say Y here to support the voltage regulators on PMIC8901
+
+config REGULATOR_PM8XXX
+	tristate "Qualcomm PM8XXX PMIC Voltage regulators"
+	depends on MFD_PM8XXX
+	help
+	  This driver supports voltage regulators in Qualcomm PM8XXX PMIC chips.
+	  PM8XXX chips provide several different varieties of LDO and switching
+	  regulators.  They also provide negative charge pumps and voltage
+	  switches.
+
+config REGULATOR_GPIO
+	tristate "GPIO regulator"
+	depends on GPIOLIB
+	help
+	  This driver provides a regulator wrapper around a GPIO pin that is set
+	  to output.  It is intended to be used for GPIO pins that provide the
+	  enable signal to a physical regulator.  The GPIO enable signal can
+	  be configured to be active high (default) or active low.
+
+config REGULATOR_PM8058_XO
+	tristate "PM8058 XO Buffer driver"
+	depends on PMIC8058
+	default n
+	help
+	  This driver supports xo buffer control in the Qualcomm PM8058 PMIC
+	  chip. It is only supposed to be used when Linux on application
+	  processor is the master in control of XO buffers.
 
 endif
 
