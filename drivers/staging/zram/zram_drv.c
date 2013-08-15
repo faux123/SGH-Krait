@@ -611,7 +611,7 @@ static inline int valid_io_request(struct zram *zram, struct bio *bio)
 /*
  * Handler function for all zram I/O requests.
  */
-static void zram_make_request(struct request_queue *queue, struct bio *bio)
+static int zram_make_request(struct request_queue *queue, struct bio *bio)
 {
 	struct zram *zram = queue->queuedata;
 
@@ -630,12 +630,13 @@ static void zram_make_request(struct request_queue *queue, struct bio *bio)
 	__zram_make_request(zram, bio, bio_data_dir(bio));
 	up_read(&zram->init_lock);
 
-	return;
+	return 0;
 
 error_unlock:
 	up_read(&zram->init_lock);
 error:
 	bio_io_error(bio);
+	return 0;
 }
 
 void __zram_reset_device(struct zram *zram)
@@ -702,7 +703,7 @@ int zram_init_device(struct zram *zram)
 		"ratio. Note that zram uses about 0.1%% of the size of "
 		"the disk when not in use so a huge zram is "
 		"wasteful.\n"
-		"\tMemory Size: %zu kB\n"
+		"\tMemory Size: %lu kB\n"
 		"\tSize you selected: %llu kB\n"
 		"Continuing anyway ...\n",
 		(totalram_pages << PAGE_SHIFT) >> 10, zram->disksize >> 10
