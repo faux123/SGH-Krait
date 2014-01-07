@@ -79,3 +79,10 @@ GTAGS
 *.orig
 *~
 \#*#
+
+#user ignores
+jb-att-tw-mkzip.sh
+jb-tmo-tw-mkzip.sh
+jb-vzw-tw-mkzip.sh
+ramdisk/
+out/
