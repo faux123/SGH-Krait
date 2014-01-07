@@ -79,6 +79,7 @@
 #include <linux/stddef.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <linux/inetdevice.h>
 
 #include <linux/crypto.h>
 #include <linux/scatterlist.h>
@@ -1646,6 +1647,7 @@ int tcp_v4_rcv(struct sk_buff *skb)
 	struct sock *sk;
 	int ret;
 	struct net *net = dev_net(skb->dev);
+	struct in_device *in_dev;
 
 	if (skb->pkt_type != PACKET_HOST)
 		goto discard_it;
@@ -1736,7 +1738,14 @@ no_tcp_socket:
 bad_packet:
 		TCP_INC_STATS_BH(net, TCP_MIB_INERRS);
 	} else {
-		tcp_v4_send_reset(NULL, skb);
+		in_dev = in_dev_get(skb->dev);
+		if (in_dev) {
+			if (!IN_DEV_FORWARD(in_dev))
+				tcp_v4_send_reset(NULL, skb);
+			in_dev_put(in_dev);
+		} else
+			tcp_v4_send_reset(NULL, skb);
+
 	}
 
 discard_it:
@@ -1967,6 +1976,49 @@ void tcp_v4_destroy_sock(struct sock *sk)
 	percpu_counter_dec(&tcp_sockets_allocated);
 }
 EXPORT_SYMBOL(tcp_v4_destroy_sock);
+
+/*
+ * tcp_v4_nuke_addr - destroy all sockets on the given local address
+ */
+void tcp_v4_nuke_addr(__u32 saddr)
+{
+	unsigned int bucket;
+
+	for (bucket = 0; bucket < tcp_hashinfo.ehash_mask; bucket++) {
+		struct hlist_nulls_node *node;
+		struct sock *sk;
+		spinlock_t *lock = inet_ehash_lockp(&tcp_hashinfo, bucket);
+
+restart:
+		spin_lock_bh(lock);
+		sk_nulls_for_each(sk, node, &tcp_hashinfo.ehash[bucket].chain) {
+			struct inet_sock *inet = inet_sk(sk);
+
+			if (inet->inet_rcv_saddr != saddr)
+				continue;
+			if (sysctl_ip_dynaddr && sk->sk_state == TCP_SYN_SENT)
+				continue;
+			if (sock_flag(sk, SOCK_DEAD))
+				continue;
+
+			sock_hold(sk);
+			spin_unlock_bh(lock);
+
+			local_bh_disable();
+			bh_lock_sock(sk);
+			sk->sk_err = ETIMEDOUT;
+			sk->sk_error_report(sk);
+
+			tcp_done(sk);
+			bh_unlock_sock(sk);
+			local_bh_enable();
+			sock_put(sk);
+
+			goto restart;
+		}
+		spin_unlock_bh(lock);
+	}
+}
 
 #ifdef CONFIG_PROC_FS
 /* Proc filesystem TCP sock list dumping. */

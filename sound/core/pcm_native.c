@@ -5,8 +5,7 @@
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ *   the Free Software Foundation; only version 2 of the License.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -28,6 +27,8 @@
 #include <linux/dma-mapping.h>
 #include <sound/core.h>
 #include <sound/control.h>
+#include <sound/snd_compress_params.h>
+#include <sound/compress_offload.h>
 #include <sound/info.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
@@ -393,22 +394,27 @@ static int snd_pcm_hw_params(struct snd_pcm_substream *substream,
 #if defined(CONFIG_SND_PCM_OSS) || defined(CONFIG_SND_PCM_OSS_MODULE)
 	if (!substream->oss.oss)
 #endif
-		if (atomic_read(&substream->mmap_count))
+		if (atomic_read(&substream->mmap_count)) {
+			pr_err("%s stream mmap_count error", __func__);
 			return -EBADFD;
-
+		}
 	params->rmask = ~0U;
 	err = snd_pcm_hw_refine(substream, params);
-	if (err < 0)
+	if (err < 0) {
+		pr_err("%s pcm hw refine failed %d\n", __func__, err);
 		goto _error;
-
+	}
 	err = snd_pcm_hw_params_choose(substream, params);
-	if (err < 0)
+	if (err < 0) {
+		pr_err("%s pcm hw param choose failed %d\n", __func__, err);
 		goto _error;
-
+	}
 	if (substream->ops->hw_params != NULL) {
 		err = substream->ops->hw_params(substream, params);
-		if (err < 0)
+		if (err < 0) {
+			pr_err("%s pcm hw params failed %d\n", __func__, err);
 			goto _error;
+		}
 	}
 
 	runtime->access = params_access(params);
@@ -476,13 +482,19 @@ static int snd_pcm_hw_params_user(struct snd_pcm_substream *substream,
 	int err;
 
 	params = memdup_user(_params, sizeof(*params));
-	if (IS_ERR(params))
+	if (IS_ERR(params)) {
+		pr_err("%s memdump_user failed %ld\n", __func__, IS_ERR(params));
 		return PTR_ERR(params);
+	}
 
 	err = snd_pcm_hw_params(substream, params);
+	if (err < 0)
+		pr_err("%s snd_pcm_hw_params error %d\n", __func__, err);
 	if (copy_to_user(_params, params, sizeof(*params))) {
-		if (!err)
+		if (!err) {
+			pr_err("%s Failed to Copy User\n", __func__);
 			err = -EFAULT;
+		}
 	}
 
 	kfree(params);
@@ -842,6 +854,7 @@ static int snd_pcm_pre_start(struct snd_pcm_substream *substream, int state)
 	if (runtime->status->state != SNDRV_PCM_STATE_PREPARED)
 		return -EBADFD;
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    !substream->hw_no_buffer &&
 	    !snd_pcm_playback_data(substream))
 		return -EPIPE;
 	runtime->trigger_master = substream;
@@ -1519,6 +1532,19 @@ static int snd_pcm_drain(struct snd_pcm_substream *substream,
 	return result;
 }
 
+static int snd_compressed_ioctl(struct snd_pcm_substream *substream,
+				 unsigned int cmd, void __user *arg)
+{
+	struct snd_pcm_runtime *runtime;
+	int err = 0;
+
+	if (PCM_RUNTIME_CHECK(substream))
+		return -ENXIO;
+	runtime = substream->runtime;
+	pr_err("%s called with cmd = %d\n", __func__, cmd);
+	err = substream->ops->ioctl(substream, cmd, arg);
+	return err;
+}
 /*
  * drop ioctl
  *
@@ -2032,6 +2058,12 @@ int snd_pcm_open_substream(struct snd_pcm *pcm, int stream,
 	err = snd_pcm_hw_constraints_init(substream);
 	if (err < 0) {
 		snd_printd("snd_pcm_hw_constraints_init failed\n");
+		goto error;
+	}
+
+	if (substream->ops == NULL) {
+		snd_printd("cannot open back end PCMs directly\n");
+		err = -ENODEV;
 		goto error;
 	}
 
@@ -2567,6 +2599,12 @@ static int snd_pcm_common_ioctl1(struct file *file,
 		snd_pcm_stream_unlock_irq(substream);
 		return res;
 	}
+	case SNDRV_COMPRESS_GET_CAPS:
+	case SNDRV_COMPRESS_GET_CODEC_CAPS:
+	case SNDRV_COMPRESS_SET_PARAMS:
+	case SNDRV_COMPRESS_GET_PARAMS:
+	case SNDRV_COMPRESS_TSTAMP:
+		return snd_compressed_ioctl(substream, cmd, arg);
 	}
 	snd_printd("unknown ioctl = 0x%x\n", cmd);
 	return -ENOTTY;
@@ -2739,7 +2777,7 @@ static long snd_pcm_playback_ioctl(struct file *file, unsigned int cmd,
 
 	pcm_file = file->private_data;
 
-	if (((cmd >> 8) & 0xff) != 'A')
+	if ((((cmd >> 8) & 0xff) != 'A') && (((cmd >> 8) & 0xff) != 'C'))
 		return -ENOTTY;
 
 	return snd_pcm_playback_ioctl1(file, pcm_file->substream, cmd,

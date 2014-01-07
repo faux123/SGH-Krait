@@ -235,4 +235,185 @@ config CHARGER_GPIO
 	  This driver can be build as a module. If so, the module will be
 	  called gpio-charger.
 
+config BATTERY_MSM
+	tristate "MSM battery"
+	depends on ARCH_MSM
+	default m
+	help
+	  Say Y to enable support for the battery in Qualcomm MSM.
+
+config BATTERY_MSM8X60
+	tristate "MSM8X60 battery"
+	select PMIC8XXX_BATTALARM
+	help
+	  Some MSM boards have dual charging paths to charge the battery.
+	  Say Y to enable support for the battery charging in
+	  such devices.
+
+config PM8058_CHARGER
+	tristate "pmic8058 charger"
+	depends on BATTERY_MSM8X60
+	depends on PMIC8058
+	help
+	  Say Y to enable support for battery charging from the pmic8058.
+	  pmic8058 provides a linear charging circuit connected to the usb
+	  cable on Qualcomm's msm8x60 surf board.
+
+config ISL9519_CHARGER
+	tristate "isl9519 charger"
+	depends on (BATTERY_MSM8X60 || PM8921_CHARGER)
+	depends on I2C
+	default n
+	help
+	  The isl9519q charger chip from intersil is connected to an external
+	  charger cable and is preferred way of charging the battery because
+	  of its high current rating.
+	  Choose Y if you are compiling for Qualcomm's msm8x60 surf/ffa board.
+
+config SMB137B_CHARGER
+	tristate "smb137b charger"
+	default n
+	depends on I2C
+	help
+	  The smb137b charger chip from summit is a switching mode based
+	  charging solution.
+	  Choose Y if you are compiling for Qualcomm's msm8x60 fluid board.
+	  To compile this driver as a module, choose M here: the module will
+	  be called smb137b.
+
+config BATTERY_MSM_FAKE
+	tristate "Fake MSM battery"
+	depends on ARCH_MSM && BATTERY_MSM
+	default n
+	help
+	  Say Y to bypass actual battery queries.
+
+config PM8058_FIX_USB
+	tristate "pmic8058 software workaround for usb removal"
+	depends on PMIC8058
+	depends on !PM8058_CHARGER
+	help
+	  Say Y to enable the software workaround to USB Vbus line
+	  staying high even when USB cable is removed. This option
+	  is in lieu of a complete pm8058 charging driver.
+
+config BATTERY_QCIBAT
+	tristate "Quanta Computer Inc. Battery"
+	depends on SENSORS_WPCE775X
+	default n
+	help
+	  Say Y here if you want to use the Quanta battery driver for ST15
+	  platform.
+
+config BATTERY_BQ27520
+	tristate "BQ27520 battery driver"
+	depends on I2C
+	default n
+	help
+	  Say Y here to enable support for batteries with BQ27520 (I2C) chips.
+
+config BATTERY_BQ27541
+	tristate "BQ27541 battery driver"
+	depends on I2C
+	default n
+	help
+	  Say Y here to enable support for batteries with BQ27541 (I2C) chips.
+
+config BQ27520_TEST_ENABLE
+	bool "Enable BQ27520 Fuel Gauge Chip Test"
+	depends on BATTERY_BQ27520
+	default n
+	help
+	  Say Y here to enable Test sysfs Interface for BQ27520 Drivers.
+
+config PM8921_CHARGER
+	tristate "PM8921 Charger driver"
+	depends on MFD_PM8921_CORE
+	help
+	  Say Y here to enable support for pm8921 chip charger subdevice
+
+config PM8XXX_CCADC
+	tristate "PM8XXX battery current adc driver"
+	depends on MFD_PM8921_CORE
+	help
+	  Say Y here to enable support for pm8921 chip bms subdevice
+
+config LTC4088_CHARGER
+	tristate "LTC4088 Charger driver"
+	depends on GPIOLIB
+	help
+	  Say Y here to enable support for ltc4088 chip charger. It controls the
+	  operations through GPIO pins.
+
+config PM8921_BMS
+	select PM8XXX_CCADC
+	tristate "PM8921 Battery Monitoring System driver"
+	depends on MFD_PM8921_CORE
+	help
+	  Say Y here to enable support for pm8921 chip bms subdevice
+
+config PM8921_SEC_CHARGER
+	bool "samsung charger driver"
+	default n
+	help
+	 Say Y here to enable support for samsung charging driver.
+	 PM8921-charger driver is default.
+	 But Samsung need modification to adjust verification spec.
+	 So Samsung charging dirver is seperated.
+
+config CHARGER_SMB347
+	tristate "Enable SMB347 charger driver"
+	default n
+	help
+	  Say Y here to enable support for the battery charger in the SUMMIT
+	  SMB347 Charger IC.
+
+config BATTERY_CTIA
+	bool "change cut off temp"
+	default n
+	help
+	  Say Y here to change cut off charging current only usa model
+	  beacause of CTIA.
+
+config BATTERY_SEC
+	bool "Enable SEC battery driver"
+	default n
+	help
+	  Say Y here to enable support for batteries with SEC features.
+
+config SAMSUNG_LPM_MODE
+	bool "Off charging mode support in sec battery driver"
+	default n
+	help
+	 Say Y to include support for sec off charging support
+
+config WIRELESS_CHARGING
+	bool "Enable wireless charging"
+	default n
+	help
+	 Say Y here to enable support for wireless charging
+
+config BATTERY_SAMSUNG_STRETTO
+	tristate "samsung battery driver for STRETTO"
+	help
+	  Say Y here to enable support for batteries
+	  with MAX77693 (I2C) chips.
+	  MAX77693 have Charger,Fuelgauge, MUIC etc.
+	  This is samsung battery driver for STRETTO
+
+config BATTERY_MAX17047_FUELGAUGE
+	tristate "Maxim MAX17047 Fuel Gauge"
+	depends on I2C
+	help
+	  Say Y here to enable support for the MAX17047_FUELGAUGE
+	  MAX17047 is fuel-gauge systems for lithium-ion (Li+) batteries
+	  in handheld and portable equipment. The MAX17047 is configured
+	  to operate with a single lithium cell
+
+config BATTERY_MAX77693_CHARGER
+	tristate "MAX77693 battery charger support"
+	depends on MFD_MAX77693 && I2C
+	help
+	 Say Y here to enable support for the MAX77693 charger
+
 endif # POWER_SUPPLY

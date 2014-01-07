@@ -114,6 +114,10 @@ struct regulator;
  *            using the bulk regulator APIs.
  * @consumer: The regulator consumer for the supply.  This will be managed
  *            by the bulk API.
+ * @min_uV:   The minimum requested voltage for the regulator (in microvolts),
+ *            or 0 to not set a voltage.
+ * @max_uV:   The maximum requested voltage for the regulator (in microvolts),
+ *            or 0 to use @min_uV.
  *
  * The regulator APIs provide a series of regulator_bulk_() API calls as
  * a convenience to consumers which require multiple supplies.  This
@@ -122,6 +126,8 @@ struct regulator;
 struct regulator_bulk_data {
 	const char *supply;
 	struct regulator *consumer;
+	int min_uV;
+	int max_uV;
 };
 
 #if defined(CONFIG_REGULATOR)
@@ -142,6 +148,8 @@ int regulator_is_enabled(struct regulator *regulator);
 int regulator_bulk_get(struct device *dev, int num_consumers,
 		       struct regulator_bulk_data *consumers);
 int regulator_bulk_enable(int num_consumers,
+			  struct regulator_bulk_data *consumers);
+int regulator_bulk_set_voltage(int num_consumers,
 			  struct regulator_bulk_data *consumers);
 int regulator_bulk_disable(int num_consumers,
 			   struct regulator_bulk_data *consumers);
@@ -175,6 +183,9 @@ int regulator_unregister_notifier(struct regulator *regulator,
 void *regulator_get_drvdata(struct regulator *regulator);
 void regulator_set_drvdata(struct regulator *regulator, void *data);
 
+#ifdef CONFIG_SEC_PM_DEBUG
+void regulator_showall_enabled(void);
+#endif
 #else
 
 /*
@@ -235,6 +246,11 @@ static inline int regulator_bulk_disable(int num_consumers,
 static inline void regulator_bulk_free(int num_consumers,
 				       struct regulator_bulk_data *consumers)
 {
+}
+
+static inline int regulator_count_voltages(struct regulator *regulator)
+{
+	return 0;
 }
 
 static inline int regulator_set_voltage(struct regulator *regulator,

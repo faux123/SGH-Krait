@@ -23,9 +23,19 @@
 #include <linux/init.h>
 #include <linux/nmi.h>
 #include <linux/dmi.h>
+#include <mach/sec_debug.h>
+
+/*  FIX ME
+  * No Better way
+  */
+#include <mach/../../qdss.h>
+
 
 #define PANIC_TIMER_STEP 100
 #define PANIC_BLINK_SPD 18
+
+/* Machine specific panic information string */
+char *mach_panic_string;
 
 int panic_on_oops;
 static unsigned long tainted_mask;
@@ -33,7 +43,10 @@ static int pause_on_oops;
 static int pause_on_oops_flag;
 static DEFINE_SPINLOCK(pause_on_oops_lock);
 
-int panic_timeout;
+#ifndef CONFIG_PANIC_TIMEOUT
+#define CONFIG_PANIC_TIMEOUT 0
+#endif
+int panic_timeout = CONFIG_PANIC_TIMEOUT;
 EXPORT_SYMBOL_GPL(panic_timeout);
 
 ATOMIC_NOTIFIER_HEAD(panic_notifier_list);
@@ -44,6 +57,9 @@ static long no_blink(int state)
 {
 	return 0;
 }
+#ifdef CONFIG_SAMSUNG_DEBUG_DISPLAY
+void dump_event_code(void);
+#endif
 
 /* Returns how long it waited in ms */
 long (*panic_blink)(int state);
@@ -65,12 +81,21 @@ NORET_TYPE void panic(const char * fmt, ...)
 	int state = 0;
 
 	/*
+	 * Disable the Trace AS SOON AS POSSIBLE So we can preserve the
+	 * Faulty Instructions for Analysis
+	 */
+	 __etb_disable();
+
+	/*
 	 * It's possible to come here directly from a panic-assertion and
 	 * not have preempt disabled. Some functions called from here want
 	 * preempt to be disabled. No point enabling it later though...
 	 */
 	preempt_disable();
-
+#ifdef CONFIG_SAMSUNG_DEBUG_DISPLAY
+	dump_event_code();
+#endif
+	secdbg_sched_msg("!!panic!!");
 	console_verbose();
 	bust_spinlocks(1);
 	va_start(args, fmt);
@@ -79,6 +104,11 @@ NORET_TYPE void panic(const char * fmt, ...)
 	printk(KERN_EMERG "Kernel panic - not syncing: %s\n",buf);
 #ifdef CONFIG_DEBUG_BUGVERBOSE
 	dump_stack();
+#endif
+
+#ifdef CONFIG_SEC_DEBUG_SUBSYS
+	sec_debug_save_panic_info(buf,
+		(unsigned int)__builtin_return_address(0));
 #endif
 
 	/*
@@ -350,6 +380,11 @@ late_initcall(init_oops_id);
 void print_oops_end_marker(void)
 {
 	init_oops_id();
+
+	if (mach_panic_string)
+		printk(KERN_WARNING "Board Information: %s\n",
+		       mach_panic_string);
+
 	printk(KERN_WARNING "---[ end trace %016llx ]---\n",
 		(unsigned long long)oops_id);
 }

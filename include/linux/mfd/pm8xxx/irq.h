@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -24,6 +24,7 @@
 struct pm8xxx_irq_core_data {
 	u32		rev;
 	int		nirqs;
+	unsigned int	base_addr;
 };
 
 struct pm8xxx_irq_platform_data {
@@ -31,6 +32,7 @@ struct pm8xxx_irq_platform_data {
 	struct pm8xxx_irq_core_data	irq_cdata;
 	int				devirq;
 	int				irq_trigger_flag;
+	int				dev_id;
 };
 
 struct pm_irq_chip;

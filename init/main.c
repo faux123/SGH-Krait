@@ -79,6 +79,13 @@
 #include <asm/smp.h>
 #endif
 
+#include <linux/gpio.h>
+#include <mach/gpiomux.h>
+
+#ifdef CONFIG_SEC_GPIO_DVS
+#include <linux/secgpio_dvs.h>
+#endif
+
 static int kernel_init(void *);
 
 extern void init_IRQ(void);
@@ -107,6 +114,17 @@ bool early_boot_irqs_disabled __read_mostly;
 
 enum system_states system_state __read_mostly;
 EXPORT_SYMBOL(system_state);
+
+#ifdef CONFIG_SAMSUNG_LPM_MODE
+int poweroff_charging;
+#endif /* CONFIG_SAMSUNG_LPM_MODE */
+
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+#define USB_STRING_MAX	31
+char usb_string_temp[USB_STRING_MAX];
+char usb_string_name[USB_STRING_MAX + 1];
+EXPORT_SYMBOL(usb_string_name);
+#endif /* CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE */
 
 /*
  * Boot command-line arguments
@@ -347,6 +365,7 @@ static __initdata DECLARE_COMPLETION(kthreadd_done);
 static noinline void __init_refok rest_init(void)
 {
 	int pid;
+	const struct sched_param param = { .sched_priority = 1 };
 
 	rcu_scheduler_starting();
 	/*
@@ -360,6 +379,7 @@ static noinline void __init_refok rest_init(void)
 	rcu_read_lock();
 	kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
 	rcu_read_unlock();
+	sched_setscheduler_nocheck(kthreadd_task, SCHED_FIFO, &param);
 	complete(&kthreadd_done);
 
 	/*
@@ -391,6 +411,20 @@ static int __init do_early_param(char *param, char *val)
 		}
 	}
 	/* We accept everything at this stage. */
+#ifdef CONFIG_SAMSUNG_LPM_MODE
+	/* check power off charging */
+	if ((strncmp(param, "androidboot.bootchg", 19) == 0)) {
+		if (strncmp(val, "true", 4) == 0)
+			poweroff_charging = 1;
+	}
+#endif
+
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+	if ((strncmp(param, "samsung.hardware", 16) == 0)) {
+		strlcpy(usb_string_temp, val, USB_STRING_MAX);
+		sprintf(usb_string_name, "_%s", usb_string_temp);
+	}
+#endif
 	return 0;
 }
 
@@ -467,11 +501,6 @@ asmlinkage void __init start_kernel(void)
 	lockdep_init();
 	debug_objects_early_init();
 
-	/*
-	 * Set up the the initial canary ASAP:
-	 */
-	boot_init_stack_canary();
-
 	cgroup_init_early();
 
 	local_irq_disable();
@@ -486,6 +515,10 @@ asmlinkage void __init start_kernel(void)
 	page_address_init();
 	printk(KERN_NOTICE "%s", linux_banner);
 	setup_arch(&command_line);
+	/*
+	 * Set up the the initial canary ASAP:
+	 */
+	boot_init_stack_canary();
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);
@@ -741,6 +774,15 @@ static void run_init_process(const char *init_filename)
  */
 static noinline int init_post(void)
 {
+#ifdef CONFIG_SEC_GPIO_DVS
+	/************************ Caution !!! ****************************/
+	/* This function must be located in appropriate INIT position
+	 * in accordance with the specification of each BB vendor.
+	 */
+	/************************ Caution !!! ****************************/
+	gpio_dvs_check_initgpio();
+#endif
+
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
 	free_initmem();
